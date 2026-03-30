@@ -1,13 +1,14 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "target": "es2024", //ESM
+    "target": "es2024",
     "skipLibCheck": true,
     "strict": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "types": ["node"]
+    // rootDir removido
   },
-  "include": ["src"]
+  "include": ["src", "prisma.config.ts"]
 }
