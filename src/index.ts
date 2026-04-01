@@ -1,4 +1,3 @@
-// Import the framework and instantiate it
 import Fastify from "fastify";
 import dotenv from "dotenv";
 import {
@@ -10,16 +9,11 @@ import {
 import fastifySwagger from "@fastify/swagger";
 import z from "zod";
 import { auth } from "./lib/auth.js";
-import { fromNodeHeaders } from "better-auth/node";
 import fastifyApiReference from "@scalar/fastify-api-reference";
 import fastifyCors from "@fastify/cors";
-import { handleOAuthUserInfo } from "better-auth/oauth2";
-
 dotenv.config();
 
-const app = Fastify({
-  logger: true,
-});
+const app = Fastify({ logger: true });
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
@@ -31,34 +25,34 @@ await app.register(fastifySwagger, {
       description: "api do projeto app fit",
       version: "1.0.0",
     },
-    servers: [
-      {
-        description: "localhost",
-        url: "http://localhost:3000",
-      },
-    ],
+    servers: [{ description: "localhost", url: "http://localhost:3000" }],
   },
   transform: jsonSchemaTransform,
 });
 
 await app.register(fastifyCors, {
-  origin: ["http://localhost:8081"], //porta front-end
+  origin: ["http://localhost:8081", "http://127.0.0.1:8081"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 });
 
-await app.register(fastifyApiReference, {
-  routePrefix: "/docs",
+// Scalar em porta separada (4000)
+const scalar = Fastify({ logger: false });
+
+await scalar.register(fastifyApiReference, {
+  routePrefix: "/",
   configuration: {
     sources: [
       {
         title: "Fit App API",
         slug: "Fit-App-API",
-        url: "/swagger.json",
+        url: "http://localhost:3000/swagger.json",
       },
       {
         title: "Auth API",
         slug: "Auth-API",
-        url: "/api/auth/open-api/generate-schema",
+        url: "http://localhost:3000/api/auth/open-api/generate-schema",
       },
     ],
   },
@@ -67,30 +61,19 @@ await app.register(fastifyApiReference, {
 app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",
   url: "/swagger.json",
-  schema: {
-    hide: true,
-  },
-  handler: async () => {
-    return app.swagger();
-  },
+  schema: { hide: true },
+  handler: async () => app.swagger(),
 });
 
-// Declare a route
 app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",
   url: "/",
   schema: {
     description: "Get a message",
     tags: ["message"],
-    response: {
-      200: z.object({
-        message: z.string(),
-      }),
-    },
+    response: { 200: z.object({ message: z.string() }) },
   },
-  handler: () => {
-    return { message: "Hello World" };
-  },
+  handler: () => ({ message: "Hello World" }),
 });
 
 app.route({
@@ -98,26 +81,21 @@ app.route({
   url: "/api/auth/*",
   async handler(request, reply) {
     try {
-      // Construct request URL
       const url = new URL(request.url, `http://${request.headers.host}`);
-
-      // Convert Fastify headers to standard Headers object
-      const headers = fromNodeHeaders(request.headers);
-
-      // Create Fetch API-compatible request
+      const headers = new Headers();
+      Object.entries(request.headers).forEach(([key, value]) => {
+        if (value) headers.append(key, value.toString());
+      });
       const req = new Request(url.toString(), {
         method: request.method,
         headers,
         ...(request.body ? { body: JSON.stringify(request.body) } : {}),
       });
-
-      // Process authentication request
       const response = await auth.handler(req);
-
-      // Forward response to client
       reply.status(response.status);
       response.headers.forEach((value, key) => reply.header(key, value));
-      reply.send(response.body ? await response.text() : null);
+      const text = await response.text();
+      reply.send(text || null);
     } catch (error) {
       app.log.error(error);
       reply.status(500).send({
@@ -128,9 +106,11 @@ app.route({
   },
 });
 
-// Run the server!
+// Sobe os dois servidores
 try {
   await app.listen({ port: Number(process.env.PORT) || 3000 });
+  await scalar.listen({ port: 8081 });
+  console.log("Scalar rodando em http://localhost:8081");
 } catch (err) {
   app.log.error(err);
   process.exit(1);
