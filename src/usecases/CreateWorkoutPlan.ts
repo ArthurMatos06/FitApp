@@ -29,6 +29,7 @@ export class CreateWorkoutPlan {
   async execute(dto: InputDto) {
     const existingActivePlan = await prisma.workoutPlan.findFirst({
       where: {
+        userId: dto.userId,
         isActive: true,
       },
     });
@@ -43,6 +44,7 @@ export class CreateWorkoutPlan {
       }
       const workoutPlan = await tx.workoutPlan.create({
         data: {
+          id: crypto.randomUUID(),
           name: dto.name,
           userId: dto.userId,
           isActive: true,
