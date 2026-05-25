@@ -23,7 +23,7 @@ importers:
       '@scalar/fastify-api-reference':
         specifier: 1.44.20
         version: 1.44.20
-      api-reference@1.44.20:
+      api-reference:
         specifier: link:@scalar/fastify/api-reference@1.44.20
         version: link:@scalar/fastify/api-reference@1.44.20
       better-auth:

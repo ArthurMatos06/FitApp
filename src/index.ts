@@ -23,7 +23,7 @@ await app.register(fastifySwagger, {
   openapi: {
     info: {
       title: "Projeto App Fit",
-      description: "api do projeto app fit",
+      description: "api do projeto app fit", 
       version: "1.0.0",
     },
     servers: [{ description: "localhost", url: "http://localhost:3000" }],
@@ -59,11 +59,8 @@ await app.register(fastifyApiReference, {
   },
 });
 
-
 //rotas do fastify
 await app.register(workoutPlanRoutes, { prefix: "/workout-plans" });
-
-
 
 app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",
@@ -121,3 +118,5 @@ try {
   app.log.error(err);
   process.exit(1);
 }
+
+
