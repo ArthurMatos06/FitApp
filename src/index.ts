@@ -1,16 +1,17 @@
-import Fastify from "fastify";
+import fastifyCors from "@fastify/cors";
+import fastifySwagger from "@fastify/swagger";
+import fastifyApiReference from "@scalar/fastify-api-reference";
 import dotenv from "dotenv";
+import Fastify from "fastify";
 import {
+  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
   ZodTypeProvider,
-  jsonSchemaTransform,
 } from "fastify-type-provider-zod";
-import fastifySwagger from "@fastify/swagger";
 import z from "zod";
+
 import { auth } from "./lib/auth.js";
-import fastifyApiReference from "@scalar/fastify-api-reference";
-import fastifyCors from "@fastify/cors";
 import { workoutPlanRoutes } from "./routes/wourkout-plans.js";
 dotenv.config();
 
