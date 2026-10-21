@@ -1,13 +1,20 @@
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "NotFoundError";    
+    this.name = "NotFoundError";
   }
 }
 
-// export class ValidationError extends Error {
-//   constructor(message: string) {
-//     super(message);
-//     this.name = "ValidationError";
-//   }
-// }
+export class WorkoutPlanNotActiveError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WorkoutPlanNotActiveError";
+  }
+}
+
+export class WorkoutSessionAlreadyStartedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WorkoutSessionAlreadyStartedError";
+  }
+}

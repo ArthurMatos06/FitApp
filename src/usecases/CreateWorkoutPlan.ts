@@ -2,7 +2,7 @@ import { NotFoundError } from "../error/index.js";
 import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
 
-// data transfer object
+// Data Transfer Object
 interface InputDto {
   userId: string;
   name: string;
@@ -10,6 +10,7 @@ interface InputDto {
     name: string;
     weekDay: WeekDay;
     isRest: boolean;
+    coverImageUrl?: string | null;
     estimatedDurationInSeconds: number;
     exercises: Array<{
       order: number;
@@ -21,20 +22,34 @@ interface InputDto {
   }>;
 }
 
-// export interface OutputDto {
-//   id: string;
-// }
+interface OutputDto {
+  id: string;
+  name: string;
+  workoutDays: Array<{
+    name: string;
+    weekDay: WeekDay;
+    isRest: boolean;
+    coverImageUrl?: string | null;
+    estimatedDurationInSeconds: number;
+    exercises: Array<{
+      order: number;
+      name: string;
+      sets: number;
+      reps: number;
+      restTimeInSeconds: number;
+    }>;
+  }>;
+}
 
 export class CreateWorkoutPlan {
-  async execute(dto: InputDto) {
+  async execute(dto: InputDto): Promise<OutputDto> {
     const existingActivePlan = await prisma.workoutPlan.findFirst({
       where: {
         userId: dto.userId,
         isActive: true,
       },
     });
-    //Transaction: desativa o plano ativo atual e cria um novo plano de treino
-    //acid Atomicidade pesquisar
+    // Transaction - Atomicidade: desativa o plano ativo atual e cria um novo plano de treino
     return await prisma.$transaction(async (tx) => {
       if (existingActivePlan) {
         await tx.workoutPlan.update({
@@ -53,6 +68,7 @@ export class CreateWorkoutPlan {
               name: workoutDay.name,
               weekDay: workoutDay.weekDay,
               isRest: workoutDay.isRest,
+              coverImageUrl: workoutDay.coverImageUrl,
               estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
               exercises: {
                 create: workoutDay.exercises.map((exercise) => ({
@@ -77,10 +93,27 @@ export class CreateWorkoutPlan {
           },
         },
       });
-      if(!result){
+      if (!result) {
         throw new NotFoundError("Workout plan not found");
       }
-      return result;
+      return {
+        id: result.id,
+        name: result.name,
+        workoutDays: result.workoutdays.map((day) => ({
+          name: day.name,
+          weekDay: day.weekDay,
+          isRest: day.isRest,
+          coverImageUrl: day.coverImageUrl,
+          estimatedDurationInSeconds: day.estimatedDurationInSeconds,
+          exercises: day.exercises.map((exercise) => ({
+            order: exercise.order,
+            name: exercise.name,
+            sets: exercise.sets,
+            reps: exercise.reps,
+            restTimeInSeconds: exercise.restTimeInSeconds,
+          })),
+        })),
+      };
     });
   }
 }
