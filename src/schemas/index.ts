@@ -104,6 +104,63 @@ export const GetStatsResponseSchema = z.object({
   totalTimeInSeconds: z.number(),
 });
 
+export const GetWorkoutPlansQuerySchema = z.object({
+  active: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) =>
+      value === undefined ? undefined : value === "true",
+    ),
+});
+
+export const GetUserTrainDataResponseSchema = z.object({
+  userId: z.string(),
+  userName: z.string(),
+  weightInGrams: z.number().int().min(0),
+  heightInCentimeters: z.number().int().min(0),
+  age: z.number().int().min(0),
+  bodyFatPercentage: z.number().int().min(0).max(100),
+});
+
+export const UpsertUserTrainDataBodySchema = GetUserTrainDataResponseSchema.omit(
+  { userId: true, userName: true },
+);
+
+export const UpsertUserTrainDataResponseSchema = z.object({
+  userId: z.string(),
+  weightInGrams: z.number().int().min(0),
+  heightInCentimeters: z.number().int().min(0),
+  age: z.number().int().min(0),
+  bodyFatPercentage: z.number().int().min(0).max(100),
+});
+
+export const GetWorkoutPlansResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  isActive: z.boolean(),
+  workoutDays: z.array(
+    z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      weekDay: z.enum(WeekDay),
+      isRest: z.boolean(),
+      coverImageUrl: z.url().nullable().optional(),
+      estimatedDurationInSeconds: z.number(),
+      exercises: z.array(
+        z.object({
+          id: z.string().uuid(),
+          name: z.string(),
+          order: z.number(),
+          workoutdayId: z.string().uuid(),
+          sets: z.number(),
+          reps: z.number(),
+          restTimeInSeconds: z.number(),
+        }),
+      ),
+    }),
+  ),
+});
+
 export const GetHomeParamsSchema = z.object({
   date: z.iso.date(),
 });
