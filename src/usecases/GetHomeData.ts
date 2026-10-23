@@ -114,14 +114,27 @@ export class GetHomeData {
       ),
     );
 
+    const today = dayjs.utc().startOf("day");
+    const streakReference = referenceDate.isAfter(today, "day")
+      ? today
+      : referenceDate;
+
     let workoutStreak = 0;
-    let cursor = referenceDate;
+    let cursor = streakReference;
+    let hasSkippedBoundaryDay = false;
     for (let i = 0; i < MAX_STREAK_LOOKBACK_DAYS; i++) {
       const cursorWeekDay = WEEK_DAY_BY_INDEX[cursor.day()];
       const scheduledWorkoutDay = workoutDaysByWeekDay.get(cursorWeekDay);
       if (scheduledWorkoutDay) {
         const cursorKey = cursor.format("YYYY-MM-DD");
-        if (!completedDates.has(cursorKey)) break;
+        if (!completedDates.has(cursorKey)) {
+          if (!hasSkippedBoundaryDay && cursor.isSame(streakReference, "day")) {
+            hasSkippedBoundaryDay = true;
+            cursor = cursor.subtract(1, "day");
+            continue;
+          }
+          break;
+        }
         workoutStreak++;
       }
       cursor = cursor.subtract(1, "day");
