@@ -1,6 +1,5 @@
 import { prisma } from "../lib/db.js";
 
-// Data Transfer Object
 interface InputDto {
   userId: string;
 }
@@ -11,7 +10,7 @@ interface OutputDto {
   weightInGrams: number;
   heightInCentimeters: number;
   age: number;
-  bodyFatPercentage: number; // 100 representa 100%
+  bodyFatPercentage: number;
 }
 
 export class GetUserTrainData {
@@ -20,23 +19,15 @@ export class GetUserTrainData {
       where: { id: dto.userId },
     });
 
-    if (
-      !user ||
-      user.weightInGrams === null ||
-      user.heightInCm === null ||
-      user.age === null ||
-      user.bodyFatPercentage === null
-    ) {
-      return null;
-    }
+    if (!user) return null;
 
     return {
       userId: user.id,
       userName: user.name,
-      weightInGrams: user.weightInGrams,
-      heightInCentimeters: user.heightInCm,
-      age: user.age,
-      bodyFatPercentage: user.bodyFatPercentage,
+      weightInGrams: user.weightInGrams ?? 0,
+      heightInCentimeters: user.heightInCm ?? 0,
+      age: user.age ?? 0,
+      bodyFatPercentage: user.bodyFatPercentage ?? 0,
     };
   }
 }

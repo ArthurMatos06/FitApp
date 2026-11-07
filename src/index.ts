@@ -28,7 +28,7 @@ await app.register(fastifySwagger, {
   openapi: {
     info: {
       title: "Projeto App Fit",
-      description: "api do projeto app fit", 
+      description: "api do projeto app fit",
       version: "1.0.0",
     },
     servers: [{ description: "localhost", url: "http://localhost:3000" }],
@@ -37,7 +37,12 @@ await app.register(fastifySwagger, {
 });
 
 await app.register(fastifyCors, {
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"], //talvez "http://localhost:8081", "http://127.0.0.1:8081"
+  origin: [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4000",
+    "http://127.0.0.1:4000",
+  ], //talvez "http://localhost:8081", "http://127.0.0.1:8081"
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -92,6 +97,7 @@ app.withTypeProvider<ZodTypeProvider>().route({
 app.route({
   method: ["GET", "POST"],
   url: "/api/auth/*",
+  schema: { hide: true },
   async handler(request, reply) {
     try {
       const url = new URL(request.url, `http://${request.headers.host}`);
@@ -127,5 +133,3 @@ try {
   app.log.error(err);
   process.exit(1);
 }
-
-

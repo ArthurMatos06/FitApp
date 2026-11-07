@@ -17,6 +17,7 @@ export const meRoutes = async (app: FastifyInstance) => {
     method: "GET",
     url: "/",
     schema: {
+      operationId: "getUserTrainData",
       tags: ["Me"],
       summary: "Get authenticated user's train data",
       response: {
@@ -41,7 +42,9 @@ export const meRoutes = async (app: FastifyInstance) => {
         const result = await getUserTrainData.execute({
           userId: session.user.id,
         });
-
+        console.log("USER ID",session.user.id)
+        console.log("RESULTADO",result)
+        
         return reply.status(200).send(result);
       } catch (error) {
         app.log.error(error);
@@ -57,6 +60,7 @@ export const meRoutes = async (app: FastifyInstance) => {
     method: "PUT",
     url: "/",
     schema: {
+      operationId: "upsertUserTrainData",
       tags: ["Me"],
       summary: "Update authenticated user's train data",
       body: UpsertUserTrainDataBodySchema,
