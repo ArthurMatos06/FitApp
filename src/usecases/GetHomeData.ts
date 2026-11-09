@@ -1,9 +1,9 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 
-import { NotFoundError } from "../error/index.js";
 import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
+import { calculateWorkoutStreak } from "../utils/calculate-workout-streak.js";
 
 dayjs.extend(utc);
 
@@ -14,7 +14,7 @@ interface InputDto {
 }
 
 interface OutputDto {
-  activeWorkoutPlanId: string;
+  activeWorkoutPlanId: string | null;
   todayWorkoutDay?: {
     workoutPlanId: string;
     id: string;
@@ -45,7 +45,6 @@ const WEEK_DAY_BY_INDEX: WeekDay[] = [
   WeekDay.SATURDAY,
 ];
 
-const MAX_STREAK_LOOKBACK_DAYS = 365;
 
 export class GetHomeData {
   async execute(dto: InputDto): Promise<OutputDto> {
@@ -55,8 +54,15 @@ export class GetHomeData {
       where: { userId: dto.userId, isActive: true },
       include: { workoutdays: { include: { exercises: true } } },
     });
+    // Sem plano ativo: retorna 200 com estado zerado para o front renderizar
+    // a tela de "criar plano" em vez de receber um erro.
     if (!activeWorkoutPlan) {
-      throw new NotFoundError("Active workout plan not found");
+      return {
+        activeWorkoutPlanId: null,
+        todayWorkoutDay: undefined,
+        workoutStreak: 0,
+        consistencyByDay: {},
+      };
     }
 
     const todayWeekDay = WEEK_DAY_BY_INDEX[referenceDate.day()];
@@ -118,27 +124,28 @@ export class GetHomeData {
     const streakReference = referenceDate.isAfter(today, "day")
       ? today
       : referenceDate;
-
-    let workoutStreak = 0;
-    let cursor = streakReference;
-    let hasSkippedBoundaryDay = false;
-    for (let i = 0; i < MAX_STREAK_LOOKBACK_DAYS; i++) {
-      const cursorWeekDay = WEEK_DAY_BY_INDEX[cursor.day()];
-      const scheduledWorkoutDay = workoutDaysByWeekDay.get(cursorWeekDay);
-      if (scheduledWorkoutDay) {
-        const cursorKey = cursor.format("YYYY-MM-DD");
-        if (!completedDates.has(cursorKey)) {
-          if (!hasSkippedBoundaryDay && cursor.isSame(streakReference, "day")) {
-            hasSkippedBoundaryDay = true;
-            cursor = cursor.subtract(1, "day");
-            continue;
-          }
-          break;
-        }
-        workoutStreak++;
-      }
-      cursor = cursor.subtract(1, "day");
-    }
+    
+    const workoutStreak = calculateWorkoutStreak({ streakReference, scheduledWeekDays: new Set(workoutDaysByWeekDay.keys()),completedDates });
+    // let workoutStreak = 0;
+    // let cursor = streakReference;
+    // let hasSkippedBoundaryDay = false;
+    // for (let i = 0; i < MAX_STREAK_LOOKBACK_DAYS; i++) {
+    //   const cursorWeekDay = WEEK_DAY_BY_INDEX[cursor.day()];
+    //   const scheduledWorkoutDay = workoutDaysByWeekDay.get(cursorWeekDay);
+    //   if (scheduledWorkoutDay) {
+    //     const cursorKey = cursor.format("YYYY-MM-DD");
+    //     if (!completedDates.has(cursorKey)) {
+    //       if (!hasSkippedBoundaryDay && cursor.isSame(streakReference, "day")) {
+    //         hasSkippedBoundaryDay = true;
+    //         cursor = cursor.subtract(1, "day");
+    //         continue;
+    //       }
+    //       break;
+    //     }
+    //     workoutStreak++;
+    //   }
+    //   cursor = cursor.subtract(1, "day");
+    // }
 
     return {
       activeWorkoutPlanId: activeWorkoutPlan.id,

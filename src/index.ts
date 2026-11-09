@@ -12,6 +12,7 @@ import {
 import z from "zod";
 
 import { auth } from "./lib/auth.js";
+import { env } from "./lib/env.js";
 import { aiRoutes } from "./routes/ai.js";
 import { homeRoutes } from "./routes/home.js";
 import { meRoutes } from "./routes/me.js";
@@ -31,18 +32,15 @@ await app.register(fastifySwagger, {
       description: "api do projeto app fit",
       version: "1.0.0",
     },
-    servers: [{ description: "localhost", url: "http://localhost:3000" }],
+    servers: [{ description: "Backend", url: env.BASE_URL }],
   },
   transform: jsonSchemaTransform,
 });
 
 await app.register(fastifyCors, {
   origin: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:4000",
-    "http://127.0.0.1:4000",
-  ], //talvez "http://localhost:8081", "http://127.0.0.1:8081"
+    env.WEB_APP_BASE_URL
+  ], 
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -58,12 +56,12 @@ await app.register(fastifyApiReference, {
       {
         title: "Fit App API",
         slug: "Fit-App-API",
-        url: "http://localhost:3000/swagger.json",
+        url: `${env.BASE_URL}/swagger.json`,
       },
       {
         title: "Auth API",
         slug: "Auth-API",
-        url: "http://localhost:3000/api/auth/open-api/generate-schema",
+        url: `${env.BASE_URL}/api/auth/open-api/generate-schema`,
       },
     ],
   },
@@ -127,8 +125,7 @@ app.route({
 
 // Sobe os dois servidores
 try {
-  await app.listen({ port: Number(process.env.PORT) || 3000 });
-  console.log("Docs disponível em http://localhost:3000/docs");
+  await app.listen({ port: Number(env.PORT) || 3000 });
 } catch (err) {
   app.log.error(err);
   process.exit(1);

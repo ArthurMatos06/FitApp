@@ -122,7 +122,7 @@ export const aiRoutes = async (app: FastifyInstance) => {
       const userId = session.user.id;
 
       const result = streamText({
-        model: google("gemini-2.5-flash"),
+        model: google("gemini-3.6-flash"),
         system: AI_SYSTEM_PROMPT,
         messages: await convertToModelMessages(messages),
         tools: {
