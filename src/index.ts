@@ -9,6 +9,7 @@ import {
   validatorCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import pretty from "pino-pretty";
 import z from "zod";
 
 import { auth } from "./lib/auth.js";
@@ -19,9 +20,21 @@ import { meRoutes } from "./routes/me.js";
 import { statsRoutes } from "./routes/stats.js";
 import { workoutPlanRoutes } from "./routes/wourkout-plans.js";
 dotenv.config();
+const envToLogger = {
+  development: {
+    stream: pretty({
+      colorize: true,
+      translateTime: "HH:MM:ss Z",
+      ignore: "pid,hostname",
+    }),
+  },
+  production: true,
+  test: false,
+};
 
-const app = Fastify({ logger: true });
-
+const app = Fastify({
+  logger: envToLogger[env.NODE_ENV],
+});
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
@@ -38,9 +51,7 @@ await app.register(fastifySwagger, {
 });
 
 await app.register(fastifyCors, {
-  origin: [
-    env.WEB_APP_BASE_URL
-  ], 
+  origin: [env.WEB_APP_BASE_URL],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
