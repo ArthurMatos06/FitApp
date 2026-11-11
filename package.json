@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
-    "build": "pnpm exec prisma generate && tsc"
+    "build": "pnpm exec prisma generate && tsc",
+    "start": "node dist/index.js"
   },
   "engines": {
     "node": "26.x.x"
