@@ -9,31 +9,20 @@ import {
   validatorCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import pretty from "pino-pretty";
 import z from "zod";
 
 import { auth } from "./lib/auth.js";
 import { env } from "./lib/env.js";
+import { loggerConfig } from "./lib/logger.js";
 import { aiRoutes } from "./routes/ai.js";
 import { homeRoutes } from "./routes/home.js";
 import { meRoutes } from "./routes/me.js";
 import { statsRoutes } from "./routes/stats.js";
 import { workoutPlanRoutes } from "./routes/wourkout-plans.js";
 dotenv.config();
-const envToLogger = {
-  development: {
-    stream: pretty({
-      colorize: true,
-      translateTime: "HH:MM:ss Z",
-      ignore: "pid,hostname",
-    }),
-  },
-  production: true,
-  test: false,
-};
 
 const app = Fastify({
-  logger: envToLogger[env.NODE_ENV],
+  logger: loggerConfig,
 });
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
@@ -136,7 +125,7 @@ app.route({
 
 // Sobe os dois servidores
 try {
-  await app.listen({ port: Number(env.PORT) || 3000 });
+  await app.listen({ port: Number(env.PORT) || 3000, host: "0.0.0.0" });
 } catch (err) {
   app.log.error(err);
   process.exit(1);
